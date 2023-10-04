@@ -65,7 +65,7 @@ linuxOS:
     javac: "{{JAVA_HOME}}/bin/javac -version"
 
   logs:
-    elastic: "ls -alt {{LOGPATH}} | grep '{{CLUSTERNAME}}.log' | awk '{print $9}'"
+    elastic: "ls -alt {{LOGPATH}} | grep -e '{{CLUSTERNAME}}.log' -e '{{CLUSTERNAME}}.json' | awk '{print $9}'"
     elastic-arc: "ls -alt {{LOGPATH}} | grep '{{CLUSTERNAME}}-.*-1.log.gz' | awk '{print $9}'"
     gc: "ls -alt {{LOGPATH}} |  awk '/gc/ {print $9}'"
     kibana: "ls -alt /var/log/kibana/ |  awk '/.json|.log/ {print $9}'"
@@ -85,7 +85,7 @@ macOS:
     javac: "{{JAVA_HOME}}/bin/javac -version"
 
   logs:
-    elastic: "ls -alt {{LOGPATH}} | grep '{{CLUSTERNAME}}.log' | awk '{print $9}'"
+    elastic: "ls -alt {{LOGPATH}} | grep -e '{{CLUSTERNAME}}.log' -e '{{CLUSTERNAME}}.json' | awk '{print $9}'"
     elastic-arc: "ls -alt {{LOGPATH}} | grep '{{CLUSTERNAME}}-.*-1.log.gz' | awk '{print $9}'"
     gc: "ls -alt {{LOGPATH}} |  awk '/gc/ {print $9}'"
     kibana: "ls -alt /var/log/kibana/ |  awk '/.json|.log/ {print $9}'"
@@ -127,9 +127,9 @@ import-templates:
   - "monitoring-logstash-diag"
   - "metricbeat-system-diag"
 
-monitoring-extract-pattern: ".monitoring-es-7-diag-import"
-logstash-extract-pattern: ".monitoring-logstash-7-diag-import"
-metricbeat-extract-pattern: "metricbeat-7-diag-import"
+monitoring-extract-pattern: ".monitoring-es-{{version}}-diag-import-{{suffix}}"
+logstash-extract-pattern: ".monitoring-logstash-{{version}}-diag-import-{{suffix}}"
+metricbeat-extract-pattern: "metricbeat-{{version}}-diag-import-{{suffix}}"
 
 query-files:
   - general
