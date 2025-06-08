@@ -6,59 +6,48 @@
  */
 package co.elastic.support.rest;
 
-import co.elastic.support.util.SystemProperties;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.Getter;
 
+@Getter
 public class RestEntry {
-
-    private static final Logger logger = LogManager.getLogger(RestEntry.class);
-
     public static final String MISSING = "missing";
 
-    public RestEntry(String name, String subdir, String extension, boolean retry, String url, boolean showErrors){
+    private final String name;
+    private final String url;
+    private final String subdir;
+    private final String extension;
+    private final boolean retry;
+    private final boolean showErrors;
+    private final String pageableFieldName;
+    private final boolean pageable;
+    private final boolean spaceAware;
+
+    public RestEntry(String name, String subdir, String extension, boolean retry, String url, boolean showErrors) {
+        this(name, subdir, extension, retry, url, showErrors, null, false);
+    }
+
+    public RestEntry(
+        String name,
+        String subdir,
+        String extension,
+        boolean retry,
+        String url,
+        boolean showErrors,
+        String pageableFieldName,
+        boolean spaceAware
+    ) {
         this.name = name;
         this.subdir = subdir;
         this.extension = extension;
         this.retry = retry;
         this.url = url;
         this.showErrors = showErrors;
+        this.pageableFieldName = pageableFieldName;
+        this.pageable = pageableFieldName != null;
+        this.spaceAware = spaceAware;
     }
 
-    public String name;
-
-    public String getName() {
-        return name;
+    public RestEntry copyWithNewUrl(String url, String subdir) {
+        return new RestEntry(name, subdir, extension, retry, url, showErrors, pageableFieldName, spaceAware);
     }
-
-    public String  url;
-
-    public String getUrl() {
-        return url;
-    }
-
-    public String subdir = SystemProperties.fileSeparator;
-
-    public String getSubdir() {
-        return subdir;
-    }
-
-    public String extension = "json";
-
-    public String getExtension() {
-        return extension;
-    }
-
-    public boolean retry = false;
-
-    public boolean isRetry() {
-        return retry;
-    }
-
-    public boolean showErrors = true;
-
-
-
-
-
 }

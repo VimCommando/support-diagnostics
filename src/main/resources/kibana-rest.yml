@@ -5,9 +5,14 @@
 #     * extension - the file extension to be used for output. Optional, defaults to .json.
 #     * subdir - some api's are now grouped in a subdirectory of the output directory to lessen clutter. Optional, defaults to root dir.
 #     * retry - whether if a query fails it will be retried for the configured number of attempts. Optional, defaults to false.
-#     * versions - one or more attributes of the format "version rule: "query string". Each set of version/query key pairs
-#       should evaluate to exactly one that is appropriate for the version of the server being queried. Therefor rules should
-#       be structured in such a way that only a valid query can be executed against a given version. Required.
+#     * versions - it can be:
+#       * A map constituted of "semver rules" and its associated "url/api" to run (`">= 7.0.0" : "/api/someendpoint/"`)
+#       * A map constituted of "semver rules" and its associated structure:
+#         * url - required field representing the API to be used
+#         * spaceaware - optional boolean option representing the fact the field is space aware. IF set, the API will be scraped for each space
+#         * paginate - optional string option representing the pagination field name. If set, the API will be paginated using the field name
+#
+#   The "semver rules" within "versions" must resolve EXACTLY TO ONE "url/api"
 #   NPM mode is the only one used: https://github.com/vdurmont/semver4j
 #   NPM Versioning rules are documented here: https://github.com/npm/node-semver
 #
@@ -20,12 +25,19 @@ kibana_actions:
 
 kibana_alerts:
   versions:
-    ">= 7.9.0": "/api/alerts/_find"
+    ">= 7.9.0":
+      url: "/api/alerts/_find"
+      spaceaware: true
+      paginate: per_page
 
 kibana_alerts_health:
   versions:
     ">= 7.11.0 < 7.13.0": "/api/alerts/_health"
     ">= 7.13.0": "/api/alerting/_health"
+
+kibana_data_views:
+  versions:
+    ">= 8.0.0": "/api/data_views"
 
 # Calculates health of Detection Engine and returns a health snapshot.
 # Scope: the whole cluster = all detection rules in all Kibana spaces.
@@ -49,7 +61,9 @@ kibana_detection_engine_privileges:
 # Scope: current/default Kibana space.
 kibana_detection_engine_rules_installed:
   versions:
-    ">= 7.6.0": "/api/detection_engine/rules/_find?sort_field=enabled&sort_order=asc"
+    ">= 7.6.0":
+      url: "/api/detection_engine/rules/_find?sort_field=enabled&sort_order=asc"
+      paginate: per_page
 
 # Returns status of prebuilt detection rules: how many of them are installed, can be installed, can be upgraded, etc.
 # Scope: current/default Kibana space.
@@ -61,15 +75,19 @@ kibana_detection_engine_rules_prebuilt_status:
 
 kibana_fleet_agents:
   versions:
-    ">= 7.10.0": "/api/fleet/agents"
+    ">= 7.10.0":
+      url: "/api/fleet/agents"
+      paginate: perPage
 
 kibana_fleet_agent_policies:
   versions:
-    ">= 7.10.0": "/api/fleet/agent_policies"
+    ">= 7.10.0":
+      url: "/api/fleet/agent_policies"
+      paginate: perPage
 
 kibana_fleet_packages:
   versions:
-    ">=7.11.0": "/api/fleet/epm/packages?experimental=true"
+    ">= 7.11.0": "/api/fleet/epm/packages?experimental=true"
 
 kibana_fleet_agent_status:
   versions:
@@ -88,6 +106,10 @@ kibana_fleet_settings:
   versions:
     ">= 7.14.0": "/api/fleet/settings"
 
+kibana_reporting_diagnose_browser:
+  versions:
+    ">= 8.16.0": "/internal/reporting/diagnose/browser"
+
 kibana_roles:
   versions:
     ">= 6.4.0": "/api/security/role"
@@ -95,28 +117,40 @@ kibana_roles:
 # These endpoints will return 404 if there are no exceptions
 kibana_security_endpoint_host_isolation:
   versions:
-    ">= 7.14.0": "/api/exception_lists/items/_find?list_id=endpoint_host_isolation_exceptions&namespace_type=agnostic"
+    ">= 7.14.0":
+      url: "/api/exception_lists/items/_find?list_id=endpoint_host_isolation_exceptions&namespace_type=agnostic"
+      paginate: per_page
 
 kibana_security_endpoint_event_filters:
   versions:
-    ">= 7.14.0": "/api/exception_lists/items/_find?list_id=endpoint_event_filters&namespace_type=agnostic"
+    ">= 7.14.0":
+      url: "/api/exception_lists/items/_find?list_id=endpoint_event_filters&namespace_type=agnostic"
+      paginate: per_page
 
 kibana_security_endpoint_exception_items:
   versions:
-    ">= 7.14.0": "/api/exception_lists/items/_find?list_id=endpoint_list&namespace_type=agnostic"
+    ">= 7.14.0":
+      url: "/api/exception_lists/items/_find?list_id=endpoint_list&namespace_type=agnostic"
+      paginate: per_page
 
 kibana_security_endpoint_metadata:
   versions:
-    ">= 8.0.0": "/api/endpoint/metadata"
+    ">= 8.0.0":
+      url: "/api/endpoint/metadata"
+      paginate: pageSize
 
 kibana_security_endpoint_trusted_apps:
   versions:
     ">= 7.10.0 < 7.14.0": "/api/endpoint/trusted_apps"
-    ">= 7.14.0": "/api/exception_lists/items/_find?list_id=endpoint_trusted_apps&namespace_type=agnostic"
+    ">= 7.14.0":
+      url: "/api/exception_lists/items/_find?list_id=endpoint_trusted_apps&namespace_type=agnostic"
+      paginate: per_page
 
 kibana_security_exception_list:
   versions:
-    ">= 7.10.0": "/api/exception_lists/_find?namespace_type=agnostic"
+    ">= 7.10.0":
+      url: "/api/exception_lists/_find?namespace_type=agnostic"
+      paginate: per_page
 
 kibana_security_packages:
   versions:
@@ -143,9 +177,32 @@ kibana_status:
   versions:
     ">= 5.0.0": "/api/status"
 
+kibana_synthetics_monitor_filters:
+  versions:
+    ">= 8.12.0": "/internal/synthetics/monitor/filters"
+
+# Disabled pending review
+#kibana_synthetics_monitors:
+#  versions:
+#    ">= 8.12.0":
+#      url: "/internal/synthetics/service/monitors"
+#      paginate: perPage
+
+kibana_synthetics_private_locations:
+  versions:
+    ">= 8.12.0": "/api/synthetics/private_locations"
+
 kibana_task_manager_health:
   versions:
     ">= 7.11.0": "/api/task_manager/_health"
+
+kibana_uptime_locations:
+  versions:
+    ">= 8.12.0": "/internal/uptime/service/locations"
+
+kibana_uptime_settings:
+  versions:
+    ">= 8.12.0": "/api/uptime/settings"
 
 kibana_user:
   versions:

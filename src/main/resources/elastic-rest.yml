@@ -73,7 +73,7 @@ cat_nodes:
   subdir: "cat"
   versions:
     ">= 0.9.0 < 6.0.0": "/_cat/nodes?v&h=n,nodeId,m,i,r,d,hp,rp,cpu,load_1m,load_5m,load_15m,"
-    ">= 6.0.0": "/_cat/nodes?v&h=n,nodeId,i,v,r,m,d,dup,hp,cpu,load_1m,load_5m,load_15m,iic,sfc,sqc,scc&s=n"
+    ">= 6.0.0": "/_cat/nodes?v&h=n,nodeId,i,v,role,m,d,dup,hp,cpu,load_1m,load_5m,load_15m,iic,sfc,sqc,scc&s=n"
 
 cat_pending_tasks:
   extension: ".txt"
@@ -188,7 +188,8 @@ cluster_state:
 cluster_stats:
   tags: light
   versions:
-    ">= 0.9.0": "/_cluster/stats?human"
+    ">= 0.9.0 < 8.16.0": "/_cluster/stats?human"
+    ">= 8.16.0": "/_cluster/stats?include_remotes=true&human"
 
 dangling_indices:
   versions:
@@ -222,7 +223,7 @@ indices_stats:
   retry: true
   versions:
     ">= 0.9.0 < 7.7.0": "/_stats?level=shards&human"
-    ">= 7.7.0": "/_stats?level=shards&human&expand_wildcards=all"
+    ">= 7.7.0": "/_stats?level=shards&human&expand_wildcards=all&ignore_unavailable=true"
 
 internal_health:
   tags: light
@@ -403,7 +404,7 @@ ilm_status:
 logstash_pipeline:
   subdir: "commercial"
   versions:
-    ">= 7.12.0": "/_logstash/pipeline"
+    ">= 7.12.0": "/_logstash/pipeline?filter_path=**,-*.pipeline"
 
 ml_anomaly_detectors:
   subdir: "commercial"
@@ -437,6 +438,11 @@ ml_info:
   versions:
     ">= 6.3.0 < 7.0.0": "/_xpack/ml/info"
     ">= 7.0.0": "/_ml/info"
+
+ml_memory_stats:
+  subdir: "commercial"
+  versions:
+    ">= 8.2.0": "/_ml/memory/_stats"
 
 ml_stats:
   subdir: "commercial"
@@ -493,6 +499,11 @@ searchable_snapshots_cache_stats:
   versions:
     ">= 7.13.0": "/_searchable_snapshots/cache/stats?human"
 
+searchable_snapshots_stats:
+  subdir: "commercial"
+  versions:
+    ">= 7.13.0": "/_searchable_snapshots/stats?human"
+
 security_priv:
   subdir: "commercial"
   versions:
@@ -547,6 +558,16 @@ transform_stats:
   versions:
     ">= 7.2.0 < 7.5.0": "/_data_frame/transforms/_stats"
     ">= 7.5.0": "/_transform/_stats"
+
+transform_basic_stats:
+  subdir: "commercial"
+  versions:
+    ">= 8.13.0": "/_transform/_stats?basic=true"
+
+transform_node_stats:
+  subdir: "commercial"
+  versions:
+    ">= 8.15.0": "/_transform/_node_stats"
 
 watcher_stats:
   subdir: "commercial"

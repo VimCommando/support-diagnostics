@@ -6,10 +6,10 @@
  */
 package co.elastic.support.rest;
 
-import com.vdurmont.semver4j.Semver;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.semver4j.Semver;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -26,7 +26,7 @@ public class RestEntryConfig {
     }
 
     public RestEntryConfig(String version, String mode) {
-        this.semver = new Semver(version, Semver.SemverType.NPM);
+        this.semver = new Semver(version);
         this.mode = mode;
     }
 
@@ -47,9 +47,9 @@ public class RestEntryConfig {
         return entries;
     }
 
+    @SuppressWarnings("unchecked")
     private RestEntry build(Map.Entry<String, Object> entry) {
-        String name = entry.getKey();
-        Map<String, Object> values = (Map) entry.getValue();
+        Map<String, Object> values = (Map<String, Object>) entry.getValue();
 
         // only some diagnostics provide a mode (currently only Elasticsearch)
         // currently "tags" is a simple string, but if we ever need it to be an
@@ -58,26 +58,40 @@ public class RestEntryConfig {
             return null;
         }
 
-        String subdir = (String) ObjectUtils.defaultIfNull(values.get("subdir"), "");
-        String extension = (String) ObjectUtils.defaultIfNull(values.get("extension"), ".json");
-        Boolean retry = (Boolean) ObjectUtils.defaultIfNull(values.get("retry"), false);
-        Boolean showErrors = (Boolean) ObjectUtils.defaultIfNull(values.get("showErrors"), true);
-        Map<String, String> versions = (Map) values.get("versions");
-
-        String url = getVersionSpecificUrl(versions);
-
-        return new RestEntry(name, subdir, extension, retry, url, showErrors);
+        return buildRestEntryForVersion(entry.getKey(), values);
     }
 
-    private String getVersionSpecificUrl(Map<String, String> versions) {
-        for (Map.Entry<String, String> urlVersion : versions.entrySet()) {
+    @SuppressWarnings("unchecked")
+    private RestEntry buildRestEntryForVersion(String name, Map<String, Object> entry) {
+        String subdir = (String) ObjectUtils.defaultIfNull(entry.get("subdir"), "");
+        String extension = (String) ObjectUtils.defaultIfNull(entry.get("extension"), ".json");
+        boolean retry = (boolean) ObjectUtils.defaultIfNull(entry.get("retry"), false);
+        boolean showErrors = (boolean) ObjectUtils.defaultIfNull(entry.get("showErrors"), true);
+
+        Map<String, Object> versions = (Map<String, Object>) entry.get("versions");
+
+        for (Map.Entry<String, Object> urlVersion : versions.entrySet()) {
             if (semver.satisfies(urlVersion.getKey())) {
-                return urlVersion.getValue();
+                if (urlVersion.getValue() instanceof String) {
+                    return new RestEntry(name, subdir, extension, retry, (String) urlVersion.getValue(), showErrors);
+                    // We allow it to be String,String or String,Map(url,paginate,spaceaware)
+                } else if (urlVersion.getValue() instanceof Map) {
+                    Map<String, Object> info = (Map<String, Object>) urlVersion.getValue();
+
+                    String url = (String) ObjectUtils.defaultIfNull(info.get("url"), null);
+
+                    if (url == null) {
+                        throw new RuntimeException("Undefined URL for REST entry (route)");
+                    }
+
+                    String pageableFieldName = (String) ObjectUtils.defaultIfNull(info.get("paginate"), null);
+                    boolean spaceAware = (boolean) ObjectUtils.defaultIfNull(info.get("spaceaware"), false);
+
+                    return new RestEntry(name, subdir, extension, retry, url, showErrors, pageableFieldName, spaceAware);
+                }
             }
         }
 
-        // This can happen if it's older
-        return RestEntry.MISSING;
+        return null;
     }
-
 }

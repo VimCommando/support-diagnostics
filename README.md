@@ -48,7 +48,7 @@ The support diagnostic utility is a Java application that can interrogate a runn
 
 ## Overview - What It Does
 
-When the utility runs it will first check to see if there is a more current version and display an alert message if it is out of date. From there it will connect to the host input in the command line parameters, autheticate if necessary, check the Elasticsearch version, and get a listing of available nodes and their configurations. From there it will run a series of REST API calls specific to the version that was found. If the node configuration info shows a master with an HTTP listener configured all the REST calls will be run against that master. Otherwise the node on the host that was input will be used.
+When the utility runs it will first check to see if there is a more current version and display an alert message if it is out of date. From there it will connect to the host input in the command line parameters, authenticate if necessary, check the Elasticsearch version, and get a listing of available nodes and their configurations. From there it will run a series of REST API calls specific to the version that was found. If the node configuration info shows a master with an HTTP listener configured all the REST calls will be run against that master. Otherwise the node on the host that was input will be used.
 
 Once the REST calls are complete, system calls such as top, netstat, iostat, etc. will be run against the specified host for the appropriate input diagnostic type selected. See specific documentation for more details on those type options. It will also collect logs from the node on the targeted host unless it is in REST API only mode.
 
@@ -66,7 +66,7 @@ This software is licensed under [Elastic License v2](https://www.elastic.co/lice
   - The IBM JDK is not supported due to JSSE related issues that can cause TLS errors.
   - **Important Note For Elasticsearch Version 7:** Elasticsearch now includes a bundled JVM that is used by default. For the diagnostic to retrieve thread dumps via `Jstack` it must be executed with the same JVM that was used to run Elasticsearch. The diagnostic utility will attempt to find the location of the JVM that was used to run the process it is interrogating. If it is unable to do so, you may need to manually configure the location by setting `JAVA_HOME` to the directory containing the `/bin` directory for the included JDK. For example, `<path to Elasticsearch 7 deployment>/jdk/Contents/Home`.
 - The system user account for that host(not the elasticsearch login) must have sufficient authorization to run these commands and access the logs (usually in `/var/log/elasticsearch`) in order to obtain a full collection of diagnostics.
-- If you are authenticating using the built in Security, the supplied user id must have permission to execute the diagnostic URL's. The superuser role is recommended unless you are familar enough with the calls being made to tailor your own accounts and roles.
+- If you are authenticating using the built in Security, the supplied user id must have permission to execute the diagnostic URL's. The superuser role is recommended unless you are familiar enough with the calls being made to tailor your own accounts and roles.
 
 ### Downloading And Installing
 
@@ -99,14 +99,14 @@ If you are in a rush and don't mind going through a Q&A process you can execute 
 ### Running From The Command Line
 
 - Input parameters may be specified in any order.
-- As previously stated, to ensure that all artifacts are collected it is recommended that you run the tool with elevated privileges. This means sudo on Linux type platforms and via an Administor Prompt in Windows. This is not set in stone, and is entirely dependent upon the privileges of the account running the diagnostic. Logs can be especially problematic to collect on Linux systems where Elasticsearch was installed via a package manager. When determining how to run, it is suggested you try copying one or more log files from the configured log directory to the user home of the running account. If that works you probably have sufficient authority to run without sudo or the administrative role.
+- As previously stated, to ensure that all artifacts are collected it is recommended that you run the tool with elevated privileges. This means sudo on Linux type platforms and via an Administrator Prompt in Windows. This is not set in stone, and is entirely dependent upon the privileges of the account running the diagnostic. Logs can be especially problematic to collect on Linux systems where Elasticsearch was installed via a package manager. When determining how to run, it is suggested you try copying one or more log files from the configured log directory to the user home of the running account. If that works you probably have sufficient authority to run without sudo or the administrative role.
 - An archive with the format `<diagnostic type>-diagnostics`-`<DateTimeStamp>`.zip will be created in the working directory or an output directory you have specified.
 - A truststore does not need to be specified - it's assumed you are running this against a node that you set up and if you didn't trust it you wouldn't be running this.
 - You can specify additional Java options such as a higher `-Xmx` value by setting them via the environment variable: `DIAG_JAVA_OPTS`.
 
 #### Diagnostic Types
 
-Elasticseach, Kibana, and Logstash each have three distinct execution modes available when running the diagnostic.
+Elasticsearch, Kibana, and Logstash each have three distinct execution modes available when running the diagnostic.
 
  <table>
  <thead>
@@ -374,7 +374,7 @@ Because there is no native equivalent of ssh or sftp on Windows, this functional
 
  <tr>
    <td width="20%" align="left" valign="top">--sudo</td>
-   <td width="50%" align="left" valign="top">Attempt to run the commands in the remote host via sudo. Only necessary if the account being used for remote access does not have sufficient authority to view the Elasticsearch log files(usually under /var/log/elasticseach). Defaults to false. If no remote password exists and public key was used it will attempt to use the command with no password. </td>
+   <td width="50%" align="left" valign="top">Attempt to run the commands in the remote host via sudo. Only necessary if the account being used for remote access does not have sufficient authority to view the Elasticsearch log files(usually under /var/log/elasticsearch). Defaults to false. If no remote password exists and public key was used it will attempt to use the command with no password. </td>
    <td width="30%" align="left" valign="top">Option only - no value.</td>
  </tr>
 
@@ -483,10 +483,10 @@ When the diagnostic is deployed within a Docker container it will recognize the 
 There are a number of options for interacting with applications running within Docker containers. The easiest way to run the diagnostic is simply to perform a `docker run -it` which opens a pseudo TTY. At that point you can interface with the diagnostic in the same way as you would when it was directly installed on the host. If you look in the _/docker_ directory in the diagnostic distribution you will find a sample script named `diagnostic-container-exec.sh` that contains an example of how to do this.
 
 ```$xslt
-docker run -it -v ~/docker-diagnostic-output:/diagnostic-output support-diagnostics-app  bash
+docker run -it -v ~/docker-diagnostic-output:/diagnostic-output docker.elastic.co/support/diagnostics:latest sh
 ```
 
-For the diagnostic to work seamlessly from within a container, there must be a consistent location where files can be written. The default location when the diagnostic detects that it is deployed in Docker will be a volume named _diagnostic-output_. If you examine the above script you will notice that it mounts that volume to a local directory on the host where the diagnostic loaded Docker container resides. In this case it is a folder named _docker-diagnostic-output_ in the home directory of the user account running the script. Temp files and the eventual diagnostic archive will be written to this location. You may change the volume if you adjust the explicit output directory whenever you run the diagnostic, but given that you are mapping the volume to local storage that creates a possible failure point. Therefore it's recommended you leave the _diagnostic-output_ volume name _as is_ and simply adjust the local mapping.
+For the diagnostic to work seamlessly from within a container, there must be a consistent location where files can be written. The default location when the diagnostic detects that it is deployed in Docker will be a volume named `diagnostic-output`. If you examine the above script you will notice that it mounts that volume to a local directory on the host where the diagnostic loaded Docker container resides. In this case it is a folder named _docker-diagnostic-output_ in the home directory of the user account running the script. Temp files and the eventual diagnostic archive will be written to this location. You may change the volume if you adjust the explicit output directory whenever you run the diagnostic, but given that you are mapping the volume to local storage that creates a possible failure point. Therefore it's recommended you leave the `diagnostic-output` volume name _as is_ and simply adjust the local mapping.
 
 ## File Sanitization Utility
 

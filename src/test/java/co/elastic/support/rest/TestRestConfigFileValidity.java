@@ -8,53 +8,60 @@ package co.elastic.support.rest;
 
 import co.elastic.support.diagnostics.DiagnosticException;
 import co.elastic.support.util.JsonYamlUtils;
-import com.vdurmont.semver4j.Semver;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
+import org.semver4j.Semver;
 
 import java.util.Arrays;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestRestConfigFileValidity {
-
-    private static final Logger logger = LogManager.getLogger(TestRestConfigFileValidity.class);
-
-    protected static Semver sem = new Semver("9.9.999", Semver.SemverType.NPM);
+    protected static Semver sem = new Semver("9.9.999");
 
     @Test
     public void validateElasticConfigVersioning() throws DiagnosticException {
         // validates each set of version entries.
-        for (String yamlfile : Arrays.asList("elastic-rest.yml", "logstash-rest.yml", "kibana-rest.yml", "monitoring-rest.yml")) {
-            Map<String, Object> restEntriesConfig = JsonYamlUtils.readYamlFromClasspath(yamlfile, true);
-            validateEntries(yamlfile, restEntriesConfig);
+        for (String yamlFile : Arrays.asList("elastic-rest.yml", "logstash-rest.yml", "kibana-rest.yml", "monitoring-rest.yml")) {
+            Map<String, Object> restEntriesConfig = JsonYamlUtils.readYamlFromClasspath(yamlFile, true);
+            validateEntries(yamlFile, restEntriesConfig);
         }
     }
 
-
+    @SuppressWarnings("unchecked")
     private void validateEntries(String file, Map<String, Object> config) {
         for (Map.Entry<String, Object> entry : config.entrySet()) {
+            Map<String, Object> values = (Map<String, Object>) entry.getValue();
+            Map<String, Object> versions = (Map<String, Object>) values.get("versions");
 
-            Map<String, Object> values = (Map) entry.getValue();
-
-            Map<String, String> urls = (Map) values.get("versions");
-
-            int nbrValid = 0;
+            int valid = 0;
 
             // Urls should have a leading /
             // For each entry there should be at most 1 valid url.
-            for (Map.Entry<String, String> url : urls.entrySet()) {
-                assertTrue(url.getValue(), url.getValue().startsWith("/"));
-                if (sem.satisfies(url.getKey())) {
-                    nbrValid++;
+            for (Map.Entry<String, Object> versionNode : versions.entrySet()) {
+                if (sem.satisfies(versionNode.getKey())) {
+                    valid++;
+                }
+
+                if (versionNode.getValue() instanceof String) {
+                    String url = (String) versionNode.getValue();
+                    assertTrue(url.startsWith("/"), url);
+                } else if (versionNode.getValue() instanceof Map) {
+                    Map<String,Object> entryVersion = (Map<String,Object>) versionNode.getValue();
+                    String url = (String) entryVersion.get("url");
+                    Object spaceaware = entryVersion.get("spaceaware");
+                    Object paginate = entryVersion.get("paginate");
+
+                    assertNotNull(url, entry.getKey() + "[" + versionNode.getKey() + "]");
+                    assertTrue(url.startsWith("/"), url);
+                    assertTrue(spaceaware == null || spaceaware instanceof Boolean, "spaceaware is not a Boolean");
+                    assertTrue(paginate == null || paginate instanceof String, "paginate is not a String");
                 }
             }
 
             // should be at most 1 valid URL (0 if it's not available anymore)
-            assertTrue("[" + file +  "][" + entry.getKey() + "] matches " + nbrValid, nbrValid <= 1);
-
+            assertTrue(valid <= 1, "[" + file +  "][" + entry.getKey() + "] matches " + valid);
         }
 
     }

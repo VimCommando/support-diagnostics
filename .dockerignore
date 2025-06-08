@@ -1,0 +1,9 @@
+# Build files
+build
+diagnostic-output
+target
+
+# Support files
+.github
+.idea
+.vscode

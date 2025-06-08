@@ -25,14 +25,13 @@ public class ArchiveUtils {
    public static File createZipArchive(String dir, String archiveFileName) throws DiagnosticException {
       File srcDir = new File(dir);
       String filename = dir + "-" + archiveFileName + ".zip";
-      File file = new File(filename);
 
       try (
             FileOutputStream fout = new FileOutputStream(filename);
             ZipArchiveOutputStream taos = new ZipArchiveOutputStream(fout)) {
-         archiveResultsZip(archiveFileName, taos, srcDir, ".", true);
+         archiveResultsZip(archiveFileName, taos, srcDir, null, true);
          logger.info(Constants.CONSOLE, "Archive: " + filename + " was created");
-         return file;
+         return new File(filename);
       } catch (IOException ioe) {
          throw new DiagnosticException("Couldn't create zip archive.", ioe);
       }
@@ -44,22 +43,22 @@ public class ArchiveUtils {
          File file,
          String path,
          boolean append) {
-      String relPath = path + "/" + file.getName();
+      String relPath = (path == null ? "" : path + "/") + file.getName();
 
       try {
          if (append) {
             relPath += "-" + archiveFilename;
          }
 
-         zipFileStream.putArchiveEntry(new ZipArchiveEntry(file, relPath));
-
          if (file.isFile()) {
+            zipFileStream.putArchiveEntry(new ZipArchiveEntry(file, relPath));
+
             try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file))) {
                IOUtils.copy(bis, zipFileStream);
+            } finally {
                zipFileStream.closeArchiveEntry();
             }
          } else if (file.isDirectory()) {
-            zipFileStream.closeArchiveEntry();
             for (File childFile : file.listFiles()) {
                archiveResultsZip(archiveFilename, zipFileStream, childFile, relPath, false);
             }
